@@ -27,8 +27,10 @@ class LinearRegression(nn.Module):
     def forward(self, x):
         out = self.linear(x)
         return out
-
-model = LinearRegression()
+if torch.cuda.is_available():
+    model = LinearRegression().cuda()
+else:
+    model = LinearRegression()
 criterion = nn.MSELoss()
 optimizer = optim.SGD(model.parameters(), lr=1e-3)
 
@@ -36,7 +38,7 @@ num_epochs = 1000
 for epoch in range(num_epochs):
     if torch.cuda.is_available():
         inputs = Variable(x_train.cuda())
-        target = Variable(y_traint.cuda())
+        target = Variable(y_train.cuda())
     else:
         inputs = Variable(x_train)
         target = Variable(y_train)
