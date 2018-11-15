@@ -34,7 +34,7 @@ else:
 criterion = nn.MSELoss()
 optimizer = optim.SGD(model.parameters(), lr=1e-3)
 
-num_epochs = 1000
+num_epochs = 1500
 for epoch in range(num_epochs):
     if torch.cuda.is_available():
         inputs = Variable(x_train.cuda())
@@ -54,12 +54,12 @@ for epoch in range(num_epochs):
 
     if (epoch + 1) % 20 == 0:
         print('Epoch[{}/{}], loss: {:.6f}'
-            .format(epoch+1, num_epochs, loss.data[0]))
+            .format(epoch+1, num_epochs, loss.data))
 model.eval()
 model.cpu()
 predict = model(Variable(x_train))
 predict = predict.data.numpy()
 plt.plot(x_train.numpy(), y_train.numpy(), 'ro', label='Original data')
-plt.plot(x_train.numpy(), predict)
+plt.plot(x_train.numpy(), predict, label='Fitting Line')
 plt.show()
 print("END")
