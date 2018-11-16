@@ -26,7 +26,14 @@ def get_batch(batch_size=32):
         return Variable(x).cuda(), Variable(y).cuda(), random
     else:
         print("no cuda here!!!!")
-        return Variable(x), Variable(y)
+        return Variable(x), Variable(y), random
+
+def get_line_batch(batch_size=128):
+    x_data = torch.arange(-3, 3, step=1e-2)
+    x = make_features(x_data)
+    y_data = f(x)
+    return x_data, y_data
+
 # define model
 class poly_model(nn.Module):
     def __init__(self):
@@ -40,6 +47,7 @@ class poly_model(nn.Module):
 if torch.cuda.is_available():
     model = poly_model().cuda()
 else:
+    model = poly_model()
     print("no cuda here!!!!")
     
 criterion = nn.MSELoss()
@@ -67,7 +75,9 @@ while True:
     if print_loss < 1e-3:
         break
 
-plt.plot(x_data.numpy(), output.data.cpu().numpy(), 'b*', label='Original data')
+xx_data, yy_data = get_line_batch()
+plt.plot(xx_data.numpy(), yy_data.numpy(), color="blue", linewidth=1, label='Original data')
+plt.plot(x_data.numpy(), output.data.cpu().numpy(), 'r*', label='Original data')
 #plt.plot(x_train.numpy(), predict, label='Fitting Line')
 plt.show()
 print("epoch is %d" %(epoch))
