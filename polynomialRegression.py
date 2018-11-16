@@ -17,6 +17,9 @@ def f(x):
     """ Approximated function. """
     return x.mm(w_target) + b_target[0]
 
+def f_out(x, w_out, b_out):
+    return x.mm(w_out.t()) + b_out
+
 def get_batch(batch_size=32):
     """ Build a batch i.e. (x, f(x)) pari. """
     random = torch.randn(batch_size)
@@ -25,15 +28,19 @@ def get_batch(batch_size=32):
     if torch.cuda.is_available():
         return Variable(x).cuda(), Variable(y).cuda(), random
     else:
-        print("no cuda here!!!!")
         return Variable(x), Variable(y), random
 
-def get_line_batch(batch_size=128):
+def get_line_batch(model):
     x_data = torch.arange(-3, 3, step=1e-2)
     x = make_features(x_data)
-    y_data = f(x)
+    y_data = f_out(x, model.poly.weight.data, model.poly.bias.data)
     return x_data, y_data
 
+def get_origin_batch():
+    x_data = torch.arange(-3, 3, step=1e-2)
+    x = make_features(x_data)
+    y = f(x)
+    return x_data, y
 # define model
 class poly_model(nn.Module):
     def __init__(self):
@@ -48,7 +55,6 @@ if torch.cuda.is_available():
     model = poly_model().cuda()
 else:
     model = poly_model()
-    print("no cuda here!!!!")
     
 criterion = nn.MSELoss()
 optimizer = optim.SGD(model.parameters(), lr=1e-3)
@@ -57,10 +63,9 @@ epoch = 0
 # get data
 batch_x, batch_y, x_data = get_batch()
 #x_data = batch_x.data.cpu()
-y_data = batch_y.data.cpu()
 #plt.plot(x_data.numpy(), y_data.numpy(), 'ro', label='Original data1')
 while True:
-    #batch_x, batch_y = get_batch()
+    #batch_x, batch_y, x_data = get_batch()
     # forward pass
     output = model(batch_x)
     loss = criterion(output, batch_y)
@@ -72,12 +77,16 @@ while True:
     #update parameters
     optimizer.step()
     epoch += 1
-    if print_loss < 1e-3:
+    if print_loss < 1e-1:
         break
 
-xx_data, yy_data = get_line_batch()
+y_data = batch_y.data.cpu()
+xx_data, yy_data = get_line_batch(model)
+xx_origin, yy_origin = get_origin_batch()
+plt.plot(xx_origin.numpy(), yy_origin.numpy(), color="red", linewidth=1.5, label='Original data')
 plt.plot(xx_data.numpy(), yy_data.numpy(), color="blue", linewidth=1, label='Original data')
 plt.plot(x_data.numpy(), output.data.cpu().numpy(), 'r*', label='Original data')
-#plt.plot(x_train.numpy(), predict, label='Fitting Line')
 plt.show()
-print("epoch is %d" %(epoch))
+print("epoch is %d\n" %(epoch))
+print(model.poly.weight.data)
+print(model.poly.bias.data)
