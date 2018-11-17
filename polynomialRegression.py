@@ -4,6 +4,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
+import time
 
 def make_features(x):
     """builds featrues i.e. a matrix with columns [x, x^2, x^3]. """
@@ -31,13 +32,13 @@ def get_batch(batch_size=32):
         return Variable(x), Variable(y), random
 
 def get_line_batch(model):
-    x_data = torch.arange(-3, 3, step=1e-2)
+    x_data = torch.arange(-3, 3, step=1e-3)
     x = make_features(x_data)
-    y_data = f_out(x, model.poly.weight.data, model.poly.bias.data)
+    y_data = f_out(x, model.poly.weight.data.cpu(), model.poly.bias.data.cpu())
     return x_data, y_data
 
 def get_origin_batch():
-    x_data = torch.arange(-3, 3, step=1e-2)
+    x_data = torch.arange(-3, 3, step=1e-3)
     x = make_features(x_data)
     y = f(x)
     return x_data, y
@@ -64,6 +65,9 @@ epoch = 0
 batch_x, batch_y, x_data = get_batch()
 #x_data = batch_x.data.cpu()
 #plt.plot(x_data.numpy(), y_data.numpy(), 'ro', label='Original data1')
+fig = plt.figure(1)
+ax = fig.add_subplot(1,1,1)
+plt.ion()
 while True:
     #batch_x, batch_y, x_data = get_batch()
     # forward pass
@@ -77,16 +81,22 @@ while True:
     #update parameters
     optimizer.step()
     epoch += 1
-    if print_loss < 1e-1:
+    try:
+        ax.lines.remove(lines[0])
+    except Exception:
+        xx_origin, yy_origin = get_origin_batch()
+        ax.plot(xx_origin.numpy(), yy_origin.numpy(), color="red", linewidth=1.5, label='Original data')
+        y_data = batch_y.data.cpu()
+        plt.plot(x_data.numpy(), y_data.numpy(), 'g*', label='Original data')
+    xx_data, yy_data = get_line_batch(model)
+    lines = ax.plot(xx_data.numpy(), yy_data.numpy(), color="blue", linewidth=1, label='Original data')
+    #time.sleep(0.5)
+    plt.pause(0.01)
+    if print_loss < 1e-2:
         break
 
-y_data = batch_y.data.cpu()
-xx_data, yy_data = get_line_batch(model)
-xx_origin, yy_origin = get_origin_batch()
-plt.plot(xx_origin.numpy(), yy_origin.numpy(), color="red", linewidth=1.5, label='Original data')
-plt.plot(xx_data.numpy(), yy_data.numpy(), color="blue", linewidth=1, label='Original data')
-plt.plot(x_data.numpy(), output.data.cpu().numpy(), 'r*', label='Original data')
-plt.show()
+
 print("epoch is %d\n" %(epoch))
-print(model.poly.weight.data)
-print(model.poly.bias.data)
+
+for value in model.named_parameters():
+    print(value)
