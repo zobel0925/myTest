@@ -1,0 +1,62 @@
+import torch
+import matplotlib.pyplot as plt
+import numpy as np
+import torch.nn as nn
+import torch.optim as optim
+from torch.autograd import Variable
+import time
+
+
+with open('data.txt', 'r') as f:
+    data_list = f.readlines()
+    data_list = [i.split('\n')[0] for i in data_list]
+    data_list = [i.split(',') for i in data_list]
+    data = [(float(i[0]), float(i[1]), float(i[2])) for i in data_list]
+
+x0 = list(filter(lambda x: x[-1] == 0.0, data))
+x1 = list(filter(lambda x: x[-1] == 1.0, data))
+plot_x0_0 = [i[0] for i in x0]
+plot_x0_1 = [i[1] for i in x0]
+plot_x1_0 = [i[0] for i in x1]
+plot_x1_1 = [i[1] for i in x1]
+
+plt.plot(plot_x0_0, plot_x0_1, 'ro', label='x_0')
+plt.plot(plot_x1_0, plot_x1_1, 'bo', label='x_1')
+plt.legend(loc='best')
+plt.show()
+
+class LogisticRegression(nn.Module):
+    def __init__(self):
+        super(LogisticRegression, self).__init__()
+        self.lr = nn.Linear(2,1)
+        self.sm = nn.Sigmoid()
+
+    def forward(self, x):
+        x = self.lr(x)
+        x = self.sm(x)
+
+logistic_model = LogisticRegression()
+if torch.is_cuda.is_available():
+    logistic_model.cuda()
+
+criterion = nn.BCELoss()
+optimizer = torch.optim.SGD(logistic_model.parameters(), lr=1e-3, momentum=0.9)
+
+for epoch in range(50000):
+    if torch.cuda.is_available():
+        x = Variable(x_data).cuda()
+        y = Variable(y_data).cuda()
+    else:
+        x = Variable(x_data)
+        y = Variable(y_data)
+
+    ### forward
+    out = logistic_model(x)
+    loss = criterion(out, y)
+    print_loss = loss.data[0]
+    mask = out.ge(0.5).float()
+    correct = (mask == y).sum()
+    acc = correct.data[0] / x.size(0)
+
+    ### backward
+    optimizer.zero_grad
