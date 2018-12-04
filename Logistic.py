@@ -50,17 +50,18 @@ y_np = np.array(y_in)
 print("start!!!")
 x_data = torch.from_numpy(x_np)
 y_data = torch.from_numpy(y_np)
-for epoch in range(1000):
-    if torch.cuda.is_available():
-        x = Variable(x_data).float().cuda()
-        y = Variable(y_data).float().cuda()
-    else:
-        x = Variable(x_data).float()
-        y = Variable(y_data).float()
 
+if torch.cuda.is_available():
+    x = Variable(x_data).float().cuda()
+    y = Variable(y_data).float().cuda()
+else:
+    x = Variable(x_data).float()
+    y = Variable(y_data).float()
+epoch = 0
+while epoch < 50000:
     ### forward
     out = logistic_model(x)
-    loss = criterion(out, y)
+    loss = criterion(out[:, 0], y)
     print_loss = loss.data
     mask = out.ge(0.5).float()
     correct = (mask == y).sum()
@@ -76,11 +77,13 @@ for epoch in range(1000):
         print('loss is {:.4f}'.format(print_loss))
         print('acc is {:.4f}'.format(acc))
 
+    epoch += 1
+
 w0, w1 = logistic_model.lr.weight[0]
-w0 = w0.data[0].float().numpy()
-w1 = w1.data[0].float().numpy()
-b = logistic_model.lr.bias.data[0].float().numpy()
+w0 = w0.data.float().numpy()
+w1 = w1.data.float().numpy()
+b = logistic_model.lr.bias.data.float().numpy()
 plot_x = np.arange(30, 100, 0.1)
-plot_y = (-w0*plot_x - b) / w1
+plot_y = (-w0 * plot_x - b) / w1
 plt.plot(plot_x, plot_y)
 plt.show()
